@@ -1,3 +1,4 @@
+using ShopAPI.Domain.Common;
 using ShopAPI.Domain.Entities;
 
 namespace ShopAPI.Domain.Interfaces;
@@ -5,9 +6,10 @@ namespace ShopAPI.Domain.Interfaces;
 public interface IProductRepository
 {
     Task<Product?> GetByIdAsync(Guid id);
-    Task<(IEnumerable<Product> Items, int TotalCount)> GetAllAsync(
+    Task<PagedResult<Product>> GetAllAsync(
         string? category = null,
-        int page = 1,
+        string? searchTerm = null,
+        int pageNumber = 1,
         int pageSize = 20);
     Task<Product> AddAsync(Product product);
     Task<Product> UpdateAsync(Product product);
