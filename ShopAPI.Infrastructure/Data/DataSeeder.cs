@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using ShopAPI.Domain.Entities;
 using ShopAPI.Domain.Enums;
 
@@ -57,17 +55,11 @@ public static class DataSeeder
         {
             Id = Guid.NewGuid(),
             Email = "admin@shop.com",
-            PasswordHash = HashPassword("Admin123!"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
             Role = UserRole.Admin,
             CreatedAt = now
         });
 
         await db.SaveChangesAsync();
-    }
-
-    private static string HashPassword(string password)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        return Convert.ToHexString(bytes).ToLower();
     }
 }
