@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ShopAPI.API/ShopAPI.API.csproj" />
+  <Project Path="ShopAPI.Application/ShopAPI.Application.csproj" />
+  <Project Path="ShopAPI.Domain/ShopAPI.Domain.csproj" />
+  <Project Path="ShopAPI.Infrastructure/ShopAPI.Infrastructure.csproj" />
+  <Project Path="ShopAPI.Tests/ShopAPI.Tests.csproj" />
+</Solution>
