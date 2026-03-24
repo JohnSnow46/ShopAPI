@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SignalR Test — OrderHub</title>
+  <style>
+    body { font-family: monospace; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    input, button { padding: 6px 10px; margin: 4px 2px; font-family: monospace; }
+    input[type="text"] { width: 420px; }
+    #log { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; background: #f9f9f9; }
+    .entry { margin: 2px 0; }
+    .info  { color: #555; }
+    .ok    { color: #080; }
+    .event { color: #00b; }
+    .err   { color: #c00; }
+    #status { font-weight: bold; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <h2>SignalR — OrderHub tester</h2>
+
+  <label>API base URL:
+    <input id="baseUrl" type="text" value="https://localhost:7001" />
+  </label><br/>
+
+  <label>JWT token:
+    <input id="token" type="text" placeholder="paste token here (without Bearer)" />
+  </label><br/>
+
+  <button id="btnConnect">Connect</button>
+  <button id="btnDisconnect" disabled>Disconnect</button>
+  <button onclick="document.getElementById('log').innerHTML=''">Clear log</button>
+
+  <p id="status">Disconnected</p>
+  <div id="log"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <script>
+    let connection = null;
+
+    function log(msg, cls = 'info') {
+      const el = document.getElementById('log');
+      const line = document.createElement('div');
+      line.className = 'entry ' + cls;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setStatus(text, color) {
+      const s = document.getElementById('status');
+      s.textContent = text;
+      s.style.color = color;
+    }
+
+    document.getElementById('btnConnect').addEventListener('click', async () => {
+      const base  = document.getElementById('baseUrl').value.replace(/\/$/, '');
+      const token = document.getElementById('token').value.trim();
+
+      connection = new signalR.HubConnectionBuilder()
+        .withUrl(`${base}/hubs/orders`, {
+          accessTokenFactory: () => token
+        })
+        .withAutomaticReconnect()
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+      connection.on('NewOrderPlaced', order => {
+        log(`NewOrderPlaced  → orderId=${order.id}  userId=${order.userId}  total=${order.totalAmount}  status=${order.status}`, 'event');
+      });
+
+      connection.on('OrderStatusChanged', order => {
+        log(`OrderStatusChanged → orderId=${order.id}  status=${order.status}  userId=${order.userId}`, 'event');
+      });
+
+      connection.on('StockLow', (productId, productName, quantity) => {
+        log(`StockLow ⚠ productId=${productId}  name="${productName}"  qty=${quantity}`, 'err');
+      });
+
+      connection.onreconnecting(() => { setStatus('Reconnecting…', '#a60'); log('Reconnecting…'); });
+      connection.onreconnected(() => { setStatus('Connected', 'green'); log('Reconnected', 'ok'); });
+      connection.onclose(err => {
+        setStatus('Disconnected', 'red');
+        log('Connection closed' + (err ? ': ' + err : ''), 'err');
+        document.getElementById('btnConnect').disabled    = false;
+        document.getElementById('btnDisconnect').disabled = true;
+      });
+
+      try {
+        await connection.start();
+        setStatus('Connected  (id: ' + connection.connectionId + ')', 'green');
+        log('Connected — connectionId: ' + connection.connectionId, 'ok');
+        document.getElementById('btnConnect').disabled    = true;
+        document.getElementById('btnDisconnect').disabled = false;
+      } catch (err) {
+        setStatus('Error', 'red');
+        log('Connection failed: ' + err, 'err');
+      }
+    });
+
+    document.getElementById('btnDisconnect').addEventListener('click', async () => {
+      if (connection) await connection.stop();
+    });
+  </script>
+</body>
+</html>

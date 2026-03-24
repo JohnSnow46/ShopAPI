@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
         IConfiguration config)
     {
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite(config.GetConnectionString("Default") ?? "Data Source=shop.db"));
+            options.UseSqlite(config.GetConnectionString("DefaultConnection") ?? "Data Source=shop.db"));
 
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();

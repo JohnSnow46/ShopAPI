@@ -10,6 +10,14 @@ CLAUDE.md
 # dotenv files
 .env
 
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Local development config (may contain secrets)
+appsettings.Development.json
+
 # User-specific files
 *.rsuser
 *.suo

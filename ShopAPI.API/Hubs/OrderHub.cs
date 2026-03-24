@@ -1,10 +1,18 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using ShopAPI.Application.DTOs;
 
 namespace ShopAPI.API.Hubs;
 
+public interface IOrderHubClient
+{
+    Task OrderStatusChanged(OrderDto order);
+    Task NewOrderPlaced(OrderDto order);
+    Task StockLow(Guid productId, string productName, int quantity);
+}
+
 [Authorize]
-public class OrderHub : Hub
+public class OrderHub : Hub<IOrderHubClient>
 {
     public override async Task OnConnectedAsync()
     {

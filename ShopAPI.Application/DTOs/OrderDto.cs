@@ -23,3 +23,7 @@ public record CreateOrderItemDto(
 
 public record CreateOrderDto(
     List<CreateOrderItemDto> Items);
+
+public record LowStockInfo(Guid ProductId, string ProductName, int NewQuantity);
+
+public record CreateOrderResult(OrderDto Order, IReadOnlyList<LowStockInfo> LowStockItems);

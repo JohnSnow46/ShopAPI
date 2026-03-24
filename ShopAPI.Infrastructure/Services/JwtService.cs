@@ -12,8 +12,8 @@ public class JwtService(IConfiguration config) : IJwtService
 {
     public string GenerateToken(User user)
     {
-        var secret = config["Jwt:Secret"]
-            ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+        var secret = config["Jwt:Key"]
+            ?? throw new InvalidOperationException("Jwt:Key is not configured.");
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -28,13 +28,13 @@ public class JwtService(IConfiguration config) : IJwtService
 
         var issuer = config["Jwt:Issuer"];
         var audience = config["Jwt:Audience"];
-        var expiresMinutes = int.TryParse(config["Jwt:ExpiresMinutes"], out var m) ? m : 60;
+        var expiryHours = int.TryParse(config["Jwt:ExpiryHours"], out var h) ? h : 24;
 
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiresMinutes),
+            expires: DateTime.UtcNow.AddHours(expiryHours),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

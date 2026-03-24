@@ -11,26 +11,27 @@ public class CreateOrderUseCase(
     ICartRepository cartRepository,
     IProductRepository productRepository)
 {
-    public async Task<Result<OrderDto>> ExecuteAsync(Guid userId)
+    public async Task<Result<CreateOrderResult>> ExecuteAsync(Guid userId)
     {
         var cartItems = (await cartRepository.GetByUserIdAsync(userId)).ToList();
         if (cartItems.Count == 0)
-            return Result<OrderDto>.Failure("Cart is empty.");
+            return Result<CreateOrderResult>.Failure("Cart is empty.");
 
         var orderItems = new List<OrderItem>();
+        var productSnapshots = new List<(Guid ProductId, string ProductName, int StockQuantity)>();
         decimal totalAmount = 0;
 
         foreach (var cartItem in cartItems)
         {
             var product = await productRepository.GetByIdAsync(cartItem.ProductId);
             if (product is null)
-                return Result<OrderDto>.Failure($"Product {cartItem.ProductId} not found.");
+                return Result<CreateOrderResult>.Failure($"Product {cartItem.ProductId} not found.");
 
             if (!product.IsActive)
-                return Result<OrderDto>.Failure($"Product '{product.Name}' is not available.");
+                return Result<CreateOrderResult>.Failure($"Product '{product.Name}' is not available.");
 
             if (product.StockQuantity < cartItem.Quantity)
-                return Result<OrderDto>.Failure(
+                return Result<CreateOrderResult>.Failure(
                     $"Insufficient stock for '{product.Name}'. Available: {product.StockQuantity}, requested: {cartItem.Quantity}.");
 
             orderItems.Add(new OrderItem
@@ -41,6 +42,7 @@ public class CreateOrderUseCase(
                 UnitPrice = product.Price
             });
 
+            productSnapshots.Add((product.Id, product.Name, product.StockQuantity));
             totalAmount += product.Price * cartItem.Quantity;
         }
 
@@ -57,12 +59,19 @@ public class CreateOrderUseCase(
 
         var created = await orderRepository.AddAsync(order);
 
+        var lowStockItems = new List<LowStockInfo>();
         foreach (var item in orderItems)
+        {
             await productRepository.UpdateStockAsync(item.ProductId, -item.Quantity);
+            var snapshot = productSnapshots.First(p => p.ProductId == item.ProductId);
+            var newStock = snapshot.StockQuantity - item.Quantity;
+            if (newStock < 5)
+                lowStockItems.Add(new LowStockInfo(item.ProductId, snapshot.ProductName, newStock));
+        }
 
         await cartRepository.ClearCartAsync(userId);
 
-        return Result<OrderDto>.Success(ToDto(created));
+        return Result<CreateOrderResult>.Success(new CreateOrderResult(ToDto(created), lowStockItems));
     }
 
     private static OrderDto ToDto(Order order) => new(
