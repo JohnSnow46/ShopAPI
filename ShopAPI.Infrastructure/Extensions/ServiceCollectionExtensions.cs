@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ShopAPI.Application.Interfaces;
 using ShopAPI.Domain.Interfaces;
 using ShopAPI.Infrastructure.Data;
 using ShopAPI.Infrastructure.Repositories;
+using ShopAPI.Infrastructure.Services;
 
 namespace ShopAPI.Infrastructure.Extensions;
 
@@ -20,6 +22,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IJwtService, JwtService>();
 
         return services;
     }

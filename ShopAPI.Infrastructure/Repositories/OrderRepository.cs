@@ -19,6 +19,11 @@ public class OrderRepository(AppDbContext db) : IOrderRepository
             .Where(o => o.UserId == userId)
             .ToListAsync();
 
+    public async Task<IEnumerable<Order>> GetAllAsync() =>
+        await db.Orders
+            .Include(o => o.Items)
+            .ToListAsync();
+
     public async Task<Order> AddAsync(Order order)
     {
         db.Orders.Add(order);
