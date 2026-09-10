@@ -33,6 +33,22 @@ public class CartControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
+    public async Task Should_IncrementQuantity_WhenAddingSameProductTwice()
+    {
+        var productId = await GetFirstProductIdAsync();
+        var token = await RegisterAndGetTokenAsync(UniqueEmail());
+        var client = CreateAuthenticatedClient(token);
+
+        await client.PostAsJsonAsync("/api/cart/items", new { productId, quantity = 2 });
+        var response = await client.PostAsJsonAsync("/api/cart/items", new { productId, quantity = 3 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var item = await response.Content.ReadFromJsonAsync<CartItemDto>();
+        Assert.NotNull(item);
+        Assert.Equal(5, item.Quantity);
+    }
+
+    [Fact]
     public async Task Should_Return400_WhenAddingInactiveProduct()
     {
         // Create an inactive product as admin, then update it to inactive via UpdateProduct

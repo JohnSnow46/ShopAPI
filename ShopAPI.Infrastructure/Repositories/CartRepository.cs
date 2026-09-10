@@ -23,7 +23,9 @@ public class CartRepository(AppDbContext db) : ICartRepository
         }
         else
         {
-            existing.Quantity = item.Quantity;
+            // Product already in the cart: increment rather than overwrite the quantity,
+            // matching the documented "add or increment" behavior of this endpoint.
+            existing.Quantity += item.Quantity;
             existing.AddedAt = item.AddedAt;
         }
 
