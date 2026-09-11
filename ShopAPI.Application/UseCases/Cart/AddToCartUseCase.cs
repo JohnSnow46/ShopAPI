@@ -9,6 +9,9 @@ public class AddToCartUseCase(ICartRepository cartRepository, IProductRepository
 {
     public async Task<Result<CartItemDto>> ExecuteAsync(Guid userId, AddToCartDto dto)
     {
+        if (dto.Quantity <= 0)
+            return Result<CartItemDto>.Failure("Quantity must be greater than zero.");
+
         var product = await productRepository.GetByIdAsync(dto.ProductId);
         if (product is null)
             return Result<CartItemDto>.Failure("Product not found.");
